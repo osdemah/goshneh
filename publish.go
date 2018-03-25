@@ -22,27 +22,22 @@ func Publish(service Service) {
 }
 
 //export publishing
-func publishing(service **C.Service) bool {
-	select {
-	case s := <-publishingServices:
-		*service = (*C.Service)(C.malloc(C.sizeof_Service))
-		(*service).name = C.CString(s.Name)
-		(*service)._type = C.CString(s.Type)
-		if s.Domain != nil {
-			(*service).domain = C.CString(*s.Domain)
-		} else {
-			(*service).domain = nil
-		}
-		if s.Host != nil {
-			(*service).host = C.CString(*s.Host)
-		} else {
-			(*service).host = nil
-		}
-		(*service).port = (C.ushort)(s.Port)
-		return true
-	default:
-		return false
+func publishing(service **C.Service) {
+	s := <-publishingServices
+	*service = (*C.Service)(C.malloc(C.sizeof_Service))
+	(*service).name = C.CString(s.Name)
+	(*service)._type = C.CString(s.Type)
+	if s.Domain != nil {
+		(*service).domain = C.CString(*s.Domain)
+	} else {
+		(*service).domain = nil
 	}
+	if s.Host != nil {
+		(*service).host = C.CString(*s.Host)
+	} else {
+		(*service).host = nil
+	}
+	(*service).port = (C.ushort)(s.Port)
 }
 
 func Setup() {

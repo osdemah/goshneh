@@ -33,6 +33,8 @@ void entry_group_callback(AvahiEntryGroup* group, AvahiEntryGroupState state, vo
 }
 
 bool create_service(ServiceContext* c) {
+	pthread_testcancel();
+	pthread_mutex_lock(&(c->context->registering_lock));
 	int ret = 0;
 	AvahiEntryGroup* group = NULL;
 	if (!(group = avahi_entry_group_new(c->context->client, entry_group_callback, c))) {
@@ -55,25 +57,28 @@ bool create_service(ServiceContext* c) {
 		fprintf(stderr, "Failed to commit entry group: %s\n", avahi_strerror(ret));
 		return false;
 	}
+	pthread_mutex_unlock(&(c->context->registering_lock));
 	return true;
-
 }
 
-void create_services(Context* c) {
+void* create_services(void* arg) {
+	Context* c = (Context*)arg;
 	assert(c);
 	Service** service = malloc(sizeof(Service**));
+	pthread_cleanup_push(free, service);
 	int ret = 0;
-	while(publishing(service)) {
+	while (true) {
+		publishing(service);
 		ServiceContext* service_context = malloc(sizeof(ServiceContext));
 		service_context->service = *service;
 		service_context->context = c;
-		if (!create_service(service_context))
-		{
-			free(service);
-			return quit(c);
+		if (!create_service(service_context)) {
+			quit(c);
+			break;
 		}
 	}
-	free(service);
+	pthread_cleanup_pop(1);
+	return NULL;
 }
 
 void client_callback(AvahiClient* client, AvahiClientState state, void* data) {
@@ -82,7 +87,8 @@ void client_callback(AvahiClient* client, AvahiClientState state, void* data) {
 	c->client = client;
 	switch (state) {
 		case AVAHI_CLIENT_S_RUNNING:
-			create_services(c);
+			pthread_mutex_trylock(&(c->registering_lock));
+			pthread_mutex_unlock(&(c->registering_lock));
 			break;
 		case AVAHI_CLIENT_FAILURE:
 			fprintf(stderr, "Client failure: %s\n", avahi_strerror(avahi_client_errno(client)));
@@ -93,8 +99,8 @@ void client_callback(AvahiClient* client, AvahiClientState state, void* data) {
 			// TODO: HANDLE REGISTERING and COLLISION states!
 			fprintf(stderr, "Client failure due to entering to collision or registering state!\n");
 			quit(c);
+			break;
 		case AVAHI_CLIENT_CONNECTING:
 			;
 	}
 }
-

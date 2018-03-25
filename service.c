@@ -29,6 +29,7 @@ void service_free(Service* service) {
 }
 
 void clean(Context* c) {
+	pthread_mutex_destroy(&(c->registering_lock));
 	if (c->client)
 		avahi_client_free(c->client);
 	if (c->poll)
@@ -37,11 +38,18 @@ void clean(Context* c) {
 
 void quit(Context* c) {
 	avahi_simple_poll_quit(c->poll);
+	pthread_mutex_trylock(&(c->registering_lock));
+	pthread_cancel(c->registering_thread);
+	pthread_mutex_unlock(&(c->registering_lock));
 	clean(c);
 }
 
 void setup(Context* c) {
 	int error;
+
+	pthread_mutex_init(&(c->registering_lock), NULL);
+	pthread_mutex_lock(&(c->registering_lock));
+
 	// Allocate main loop object
 	if (!(c->poll = avahi_simple_poll_new())) {
 		fprintf(stderr, "Failed to create simple poll object.\n");
@@ -57,5 +65,6 @@ void setup(Context* c) {
 }
 
 void run(Context* c) {
+	pthread_create(&(c->registering_thread), NULL, create_services, (void*)c);
 	avahi_simple_poll_loop(c->poll);
 }

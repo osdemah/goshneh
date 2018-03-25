@@ -3,6 +3,9 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+
+#include <pthread.h>
+
 #include <avahi-client/client.h>
 #include <avahi-client/publish.h>
 #include <avahi-common/simple-watch.h>
@@ -20,6 +23,8 @@ struct Context
 {
 	AvahiSimplePoll* poll;
 	AvahiClient* client;
+	pthread_mutex_t registering_lock;
+	pthread_t registering_thread;
 };
 
 typedef struct Service Service;
@@ -37,7 +42,7 @@ void client_callback(AvahiClient *client, AvahiClientState state, void* data);
 
 void entry_group_callback(AvahiEntryGroup* group, AvahiEntryGroupState state, void* data);
 
-void create_services(Context* c);
+void* create_services(void* arg);
 
 bool create_service(ServiceContext* c);
 
