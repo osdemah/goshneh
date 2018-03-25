@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"github.com/hamed1soleimani/goshneh"
 	"os"
 	"os/signal"
 	"syscall"
-	"github.com/hamed1soleimani/goshneh"
 )
 
 func main() {
@@ -12,10 +13,16 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		goshneh.Clean()
+		goshneh.Quit()
 		os.Exit(0)
 	}()
-	defer goshneh.Clean()
+	defer goshneh.Quit()
 	goshneh.Setup()
+	goshneh.Publish(goshneh.Service{
+		Name: "TEST",
+		Type: "_http._tcp",
+		Port: 80,
+	})
 	goshneh.Run()
+	fmt.Scanln()
 }
