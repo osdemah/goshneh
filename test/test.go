@@ -17,12 +17,17 @@ func main() {
 		os.Exit(0)
 	}()
 	defer goshneh.Quit()
-	goshneh.Setup()
 	goshneh.Publish(goshneh.Service{
 		Name: "TEST",
 		Type: "_http._tcp",
 		Port: 80,
 	})
+	goshneh.Publish(goshneh.Service{
+		Name: "TEST1",
+		Type: "_http._tcp",
+		Port: 80,
+	})
+	goshneh.Setup()
 	goshneh.Run()
 	fmt.Scanln()
 }

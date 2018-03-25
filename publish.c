@@ -61,20 +61,25 @@ bool create_service(ServiceContext* c) {
 
 void create_services(Context* c) {
 	assert(c);
-	Service* service = NULL;
+	Service** service = malloc(sizeof(Service**));
 	int ret = 0;
 	while(publishing(service)) {
-		ServiceContext* service_context = malloc(sizeof(Service));
-		service_context->service = service;
+		ServiceContext* service_context = malloc(sizeof(ServiceContext));
+		service_context->service = *service;
 		service_context->context = c;
 		if (!create_service(service_context))
+		{
+			free(service);
 			return quit(c);
+		}
 	}
+	free(service);
 }
 
 void client_callback(AvahiClient* client, AvahiClientState state, void* data) {
 	Context* c = (Context*)data;
 	assert(c);
+	c->client = client;
 	switch (state) {
 		case AVAHI_CLIENT_S_RUNNING:
 			create_services(c);
