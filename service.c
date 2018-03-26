@@ -11,12 +11,14 @@
 #include <avahi-common/error.h>
 
 void alternate_service(Service* service) {
+	assert(service);
 	char* alternative_name = avahi_alternative_service_name(service->name);
 	avahi_free(service->name);
 	service->name = alternative_name;
 }
 
 void service_free(Service* service) {
+	assert(service);
 	if (service->name)
 		free(service->name);
 	if (service->type)
@@ -29,7 +31,9 @@ void service_free(Service* service) {
 }
 
 void clean(Context* c) {
-	pthread_mutex_destroy(&(c->registering_lock));
+	assert(c);
+	if (c->registering_interval)
+		avahi_simple_poll_get(c->poll)->timeout_free(c->registering_interval);
 	if (c->client)
 		avahi_client_free(c->client);
 	if (c->poll)
@@ -37,18 +41,14 @@ void clean(Context* c) {
 }
 
 void quit(Context* c) {
+	assert(c);
 	avahi_simple_poll_quit(c->poll);
-	pthread_mutex_trylock(&(c->registering_lock));
-	pthread_cancel(c->registering_thread);
-	pthread_mutex_unlock(&(c->registering_lock));
 	clean(c);
 }
 
 void setup(Context* c) {
+	assert(c);
 	int error;
-
-	pthread_mutex_init(&(c->registering_lock), NULL);
-	pthread_mutex_lock(&(c->registering_lock));
 
 	// Allocate main loop object
 	if (!(c->poll = avahi_simple_poll_new())) {
@@ -65,6 +65,6 @@ void setup(Context* c) {
 }
 
 void run(Context* c) {
-	pthread_create(&(c->registering_thread), NULL, create_services, (void*)c);
+	assert(c);
 	avahi_simple_poll_loop(c->poll);
 }
