@@ -20,23 +20,36 @@ func main() {
 	defer goshneh.Quit()
 	goshneh.Setup()
 	goshneh.Run()
+
 	goshneh.PublishedCallback = func(service goshneh.Service, err error) {
-		fmt.Println(service, err)
+		fmt.Println("Published: ", service, err)
 	}
 
-	goshneh.Publish(goshneh.Service{
-		Name:      "TEST",
-		Type:      "_http._tcp",
-		Port:      80,
-		Collision: goshneh.DoNothingOnCollision,
-	})
+	goshneh.ResolvedCallback = func(service goshneh.Service, err error) {
+		fmt.Println("Resolved: ", service, err)
+	}
 
-	for i := 0; i < 10; i++ {
+	goshneh.RemovedCallback = func(service goshneh.Service) {
+		fmt.Println("Removed: ", service)
+	}
+
+	if os.Args[1] == "P" {
 		goshneh.Publish(goshneh.Service{
-			Name: "TEST" + strconv.Itoa(i/2),
-			Type: "_http._tcp",
-			Port: 80,
+			Name:      "TEST",
+			Type:      "_http._tcp",
+			Port:      80,
+			Collision: goshneh.DoNothingOnCollision,
 		})
+
+		for i := 0; i < 10; i++ {
+			goshneh.Publish(goshneh.Service{
+				Name: "TEST" + strconv.Itoa(i/2),
+				Type: "_http._tcp",
+				Port: 80,
+			})
+		}
+	} else if os.Args[1] == "B" {
+		goshneh.Browse("_http._tcp")
 	}
 
 	fmt.Scanln()

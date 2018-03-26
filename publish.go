@@ -28,7 +28,8 @@ func Publish(service Service) {
 
 func c2GoStringPtr(s *C.char, output *string) {
 	if s != nil {
-		*output = C.GoString(s)
+		temp := C.GoString(s)
+		output = &temp
 	}
 	output = nil
 }

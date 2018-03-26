@@ -19,7 +19,14 @@ enum Errors {
 	SERVICE_REGISTRATION_FAILED, 
 	CLIENT_FAILURE,
 	ENTRY_GROUP_FAILURE,
-	ALLOCATION_FAILURE
+	ALLOCATION_FAILURE,
+	BROWSE_FAILURE,
+	RESOLVE_FAILURE
+};
+
+enum BrowseEvent {
+	SERVICE_RESOLVED = 1,
+	SERVICE_REMOVED
 };
 
 struct Service {
@@ -53,7 +60,11 @@ void client_callback(AvahiClient *client, AvahiClientState state, void* data);
 
 void entry_group_callback(AvahiEntryGroup* group, AvahiEntryGroupState state, void* data);
 
-void create_services(struct AvahiTimeout* timeout, void* data);
+void do_waiting_jobs(struct AvahiTimeout* timeout, void* data);
+
+void browse_for_services(Context* c);
+
+void create_services(Context* c);
 
 bool create_service(ServiceContext* c);
 

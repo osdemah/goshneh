@@ -91,13 +91,20 @@ bool create_service(ServiceContext* c) {
 	return true;
 }
 
-void create_services(struct AvahiTimeout* timeout, void* data) {
+void do_waiting_jobs(struct AvahiTimeout* timeout, void* data) {
 	Context* c = (Context*)data;
+	assert(c);
+	create_services(c);
+	browse_for_services(c);
+	struct timeval tv;
+	avahi_simple_poll_get(c->poll)->timeout_update(timeout, avahi_elapse_time(&tv, 100, 0));
+}
+
+void create_services(Context* c) {
 	assert(c);
 	if (!c->client_is_running)
 		return;
 	Service** service = malloc(sizeof(Service**));
-	int ret = 0;
 	while (publishing(service)) {
 		ServiceContext* service_context = malloc(sizeof(ServiceContext));
 		service_context->service = *service;
@@ -107,8 +114,6 @@ void create_services(struct AvahiTimeout* timeout, void* data) {
 			break;
 		}
 	}
-	struct timeval tv;
-	avahi_simple_poll_get(c->poll)->timeout_update(timeout, avahi_elapse_time(&tv, 100, 0));
 	free(service);
 }
 
@@ -121,7 +126,7 @@ void client_callback(AvahiClient* client, AvahiClientState state, void* data) {
 			c->client_is_running = true;
 			struct timeval tv;
 			c->registering_interval = avahi_simple_poll_get(c->poll)->timeout_new(avahi_simple_poll_get(
-				c->poll), avahi_elapse_time(&tv, 100, 0), create_services, c);
+				c->poll), avahi_elapse_time(&tv, 100, 0), do_waiting_jobs, c);
 			break;
 		case AVAHI_CLIENT_FAILURE:
 			c->client_is_running = false;
