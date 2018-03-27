@@ -6,8 +6,6 @@ package goshneh
 */
 import "C"
 
-import "errors"
-
 type Service struct {
 	Name      string
 	Type      string
@@ -22,12 +20,7 @@ var ClientFailedCallback func(err error)
 //export clientFailedCallback
 func clientFailedCallback(err uint8, strerr *C.char) {
 	if ClientFailedCallback != nil && err != 0 {
-		if strerr != nil {
-			ClientFailedCallback(errors.New(ErrorsString[err] + ": " + C.GoString(strerr)))
-		} else {
-			ClientFailedCallback(errors.New(ErrorsString[err]))
-		}
-
+		ClientFailedCallback(constructError(err, strerr))
 	}
 }
 

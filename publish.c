@@ -59,7 +59,7 @@ bool create_service(ServiceContext* c) {
 	if (!(group = avahi_entry_group_new(c->context->client, entry_group_callback, c))) {
 		char* error = concat("avahi_entry_group_new(): ",
 				avahi_strerror(avahi_client_errno(c->context->client)));
-		publishedCallback(c->service, ALLOCATION_FAILURE, error);
+		clientFailedCallback(ALLOCATION_FAILURE, error);
 		free(error);
 		service_free(c->service);
 		free(c);

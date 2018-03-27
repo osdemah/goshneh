@@ -2,7 +2,6 @@ package goshneh
 
 // #include "service.h"
 import "C"
-import "errors"
 
 var browsingTypes chan string = make(chan string, 10)
 
@@ -28,37 +27,10 @@ func browsing(typeToBrowse **C.char) bool {
 func browseCallback(service *C.Service, event uint8, err uint8, strerr *C.char) {
 	// OPTIMIZE: Isn't better to call callbacks in another goroutine to prevent avahi loop be blocked?
 	if event != ServiceRemoved && ResolvedCallback != nil {
-		var e error = nil
-		if err != 0 {
-			if strerr != nil {
-				e = errors.New(ErrorsString[err] + ": " + C.GoString(strerr))
-			} else {
-				e = errors.New(ErrorsString[err])
-			}
-
-		}
-
-		goService := Service{
-			Name: C.GoString(service.name),
-			Type: C.GoString(service._type),
-			Port: (uint16)(service.port),
-		}
-
-		c2GoStringPtr(service.host, goService.Host)
-		c2GoStringPtr(service.domain, goService.Domain)
-
-		ResolvedCallback(goService, e)
+		ResolvedCallback(cService2goService(service), constructError(err, strerr))
 	}
 
 	if event == ServiceRemoved && RemovedCallback != nil {
-		goService := Service{
-			Name: C.GoString(service.name),
-			Type: C.GoString(service._type),
-		}
-
-		c2GoStringPtr(service.domain, goService.Domain)
-
-		RemovedCallback(goService)
-
+		RemovedCallback(cService2goService(service))
 	}
 }

@@ -86,6 +86,7 @@ void do_waiting_jobs(struct AvahiTimeout* timeout, void* data) {
 	create_services(c);
 	browse_for_services(c);
 	struct timeval tv;
+	// TODO: Make command polling interval configurable.
 	avahi_simple_poll_get(c->poll)->timeout_update(timeout, avahi_elapse_time(&tv, 100, 0));
 }
 
