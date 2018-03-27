@@ -57,6 +57,7 @@ void browse_callback(
 	service->type = (char*)(type);
 	service->domain = (char*)(domain);
 	service->host = NULL;
+	service->collision = 0;
 	switch (event) {
 		case AVAHI_BROWSER_FAILURE:
 			browseCallback(service, 0, RESOLVE_FAILURE, NULL); 
