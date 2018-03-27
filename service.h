@@ -56,22 +56,6 @@ struct ServiceContext
 
 typedef struct ServiceContext ServiceContext;
 
-void client_callback(AvahiClient *client, AvahiClientState state, void* data);
-
-void entry_group_callback(AvahiEntryGroup* group, AvahiEntryGroupState state, void* data);
-
-void do_waiting_jobs(struct AvahiTimeout* timeout, void* data);
-
-void browse_for_services(Context* c);
-
-void create_services(Context* c);
-
-bool create_service(ServiceContext* c);
-
-void alternate_service(Service* service);
-
-void service_free(Service* service);
-
 void clean(Context* c);
 
 void quit(Context* c);

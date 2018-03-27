@@ -1,37 +1,16 @@
 package goshneh
 
-/*
-#cgo LDFLAGS: -L/usr/local/lib -lavahi-client -lavahi-common
-#include "service.h"
-*/
+//#include "service.h"
 import "C"
 
 import "errors"
 
-type Service struct {
-	Name      string
-	Type      string
-	Domain    *string
-	Host      *string
-	Port      uint16
-	Collision uint8
-}
-
-var context C.Context
 var publishingServices chan Service = make(chan Service, 10)
 
 var PublishedCallback func(service Service, err error)
 
 func Publish(service Service) {
 	publishingServices <- service
-}
-
-func c2GoStringPtr(s *C.char, output *string) {
-	if s != nil {
-		temp := C.GoString(s)
-		output = &temp
-	}
-	output = nil
 }
 
 //export publishedCallback
@@ -84,20 +63,4 @@ func publishing(service **C.Service) bool {
 	default:
 		return false
 	}
-}
-
-func Setup() {
-	C.setup(&context)
-}
-
-func Run() {
-	go C.run(&context)
-}
-
-func Clean() {
-	C.clean(&context)
-}
-
-func Quit() {
-	C.quit(&context)
 }
