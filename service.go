@@ -6,6 +6,8 @@ package goshneh
 */
 import "C"
 
+import "errors"
+
 type Service struct {
 	Name      string
 	Type      string
@@ -13,6 +15,20 @@ type Service struct {
 	Host      *string
 	Port      uint16
 	Collision uint8
+}
+
+var ClientFailedCallback func(err error)
+
+//export clientFailedCallback
+func clientFailedCallback(err uint8, strerr *C.char) {
+	if ClientFailedCallback != nil && err != 0 {
+		if strerr != nil {
+			ClientFailedCallback(errors.New(ErrorsString[err] + ": " + C.GoString(strerr)))
+		} else {
+			ClientFailedCallback(errors.New(ErrorsString[err]))
+		}
+
+	}
 }
 
 var context C.Context

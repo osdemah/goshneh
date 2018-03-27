@@ -15,6 +15,7 @@ func Publish(service Service) {
 
 //export publishedCallback
 func publishedCallback(service *C.Service, err uint8, strerr *C.char) {
+	// OPTIMIZE: Isn't better to call callbacks in another goroutine to prevent avahi loop be blocked?
 	if PublishedCallback != nil {
 		var e error = nil
 		if err != 0 {

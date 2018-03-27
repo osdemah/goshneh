@@ -11,6 +11,10 @@
 #include <avahi-common/error.h>
 #include <avahi-common/timeval.h>
 
+#include "utils.h"
+
+#include "_cgo_export.h"
+
 void client_callback(AvahiClient* client, AvahiClientState state, void* data);
 extern void create_services(Context* c);
 extern void browse_for_services(Context* c);
@@ -53,18 +57,20 @@ void quit(Context* c) {
 
 void setup(Context* c) {
 	assert(c);
-	int error;
+	int err;
 
 	// Allocate main loop object
 	if (!(c->poll = avahi_simple_poll_new())) {
-		fprintf(stderr, "Failed to create simple poll object.\n");
+		clientFailedCallback(ALLOCATION_FAILURE, "avahi_simple_poll_new()");
 		clean(c);
 	}
 	// Allocate a new client
-	c->client = avahi_client_new(avahi_simple_poll_get(c->poll), 0, client_callback, c, &error);
+	c->client = avahi_client_new(avahi_simple_poll_get(c->poll), 0, client_callback, c, &err);
 	// Check wether creating the client object succeeded
 	if (!c->client) {
-		fprintf(stderr, "Failed to create client: %s\n", avahi_strerror(error));
+		char* error = concat("avahi_client_new() ", avahi_strerror(err));
+		clientFailedCallback(ALLOCATION_FAILURE, error);
+		free(error);
 		clean(c);
 	}
 }
@@ -96,7 +102,7 @@ void client_callback(AvahiClient* client, AvahiClientState state, void* data) {
 			break;
 		case AVAHI_CLIENT_FAILURE:
 			c->client_is_running = false;
-			fprintf(stderr, "Client failure: %s\n", avahi_strerror(avahi_client_errno(client)));
+			clientFailedCallback(CLIENT_FAILURE, (char*)(avahi_strerror(avahi_client_errno(client))));
 			quit(c);
 			break;
 		case AVAHI_CLIENT_CONNECTING:
@@ -104,7 +110,7 @@ void client_callback(AvahiClient* client, AvahiClientState state, void* data) {
 		case AVAHI_CLIENT_S_COLLISION:
 		case AVAHI_CLIENT_S_REGISTERING:
 			// TODO: HANDLE REGISTERING and COLLISION states!
-			fprintf(stderr, "Client failure due to entering to collision or registering state!\n");
+			clientFailedCallback(CLIENT_FAILURE, NULL);
 			quit(c);
 			break;
 			;

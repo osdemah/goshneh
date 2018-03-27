@@ -26,6 +26,7 @@ func browsing(typeToBrowse **C.char) bool {
 
 //export browseCallback
 func browseCallback(service *C.Service, event uint8, err uint8, strerr *C.char) {
+	// OPTIMIZE: Isn't better to call callbacks in another goroutine to prevent avahi loop be blocked?
 	if event != ServiceRemoved && ResolvedCallback != nil {
 		var e error = nil
 		if err != 0 {

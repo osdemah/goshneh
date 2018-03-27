@@ -9,6 +9,8 @@
 #include <avahi-common/malloc.h>
 #include <avahi-common/error.h>
 
+#include "utils.h"
+
 #include "_cgo_export.h"
 
 bool create_service(ServiceContext* c);
@@ -55,8 +57,10 @@ bool create_service(ServiceContext* c) {
 	int ret = 0;
 	AvahiEntryGroup* group = NULL;
 	if (!(group = avahi_entry_group_new(c->context->client, entry_group_callback, c))) {
-		fprintf(stderr, "avahi_entry_group_new() failed: %s\n", avahi_strerror(avahi_client_errno(
-						c->context->client)));
+		char* error = concat("avahi_entry_group_new(): ",
+				avahi_strerror(avahi_client_errno(c->context->client)));
+		publishedCallback(c->service, ALLOCATION_FAILURE, error);
+		free(error);
 		service_free(c->service);
 		free(c);
 		return false;
@@ -78,15 +82,14 @@ bool create_service(ServiceContext* c) {
 		}
 		else
 		{
-			fprintf(stderr, "Failed to add %s service of type %s : %s\n", c->service->name,
-				c->service->type, avahi_strerror(ret));
+			publishedCallback(c->service, SERVICE_REGISTRATION_FAILED, (char*)(avahi_strerror(ret)));
 			service_free(c->service);
 			free(c);
 			return false;
 		}
 	}
 	if ((ret = avahi_entry_group_commit(group)) < 0) {
-		fprintf(stderr, "Failed to commit entry group: %s\n", avahi_strerror(ret));
+		publishedCallback(c->service, SERVICE_REGISTRATION_FAILED, (char*)(avahi_strerror(ret)));
 		service_free(c->service);
 		free(c);
 		return false;
@@ -100,6 +103,10 @@ void create_services(Context* c) {
 		return;
 	Service** service = malloc(sizeof(Service**));
 	while (publishing(service)) {
+		// TODO: Add support of publishing TXT records for services.
+		// TODO: Add support of setting different callbacks for registering services.
+		// TODO: Add support of removing a resource manually (At termination avahi do this automatically)
+		// TODO: Add support of sync publishing
 		ServiceContext* service_context = malloc(sizeof(ServiceContext));
 		service_context->service = *service;
 		service_context->context = c;

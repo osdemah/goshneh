@@ -6,6 +6,8 @@
 #include <avahi-common/malloc.h>
 #include <avahi-common/error.h>
 
+#include "utils.h"
+
 #include "_cgo_export.h"
 
 void resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex interface,
@@ -13,6 +15,7 @@ void resolve_callback(AvahiServiceResolver *r, AVAHI_GCC_UNUSED AvahiIfIndex int
 		const char *name, const char *type, const char *domain, const char *host_name,
 		const AvahiAddress *address, uint16_t port, AvahiStringList *txt, AvahiLookupResultFlags flags,
 		void* data) {
+	// TODO: Add support of passing TXT records of resolved services.
 	assert(r);
 	Service* service = (Service*)data;
 	assert(service);
@@ -79,11 +82,16 @@ void browse_for_services(Context* c) {
 		return;
 	char** type = malloc(sizeof(char**));
 	while (browsing(type)) {
-		// FIXME: free browser at the end!
+		// FIXME: free browser at the end (MEMORY LEAK)!
+		// TODO: Add support of cancel browsing
+		// TODO: Prevent multiple browsing on a type
+		// TODO: Add support of setting different callbacks for browsing procedures
 		if (!avahi_service_browser_new(c->client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, *type, NULL, 0,
 					browse_callback, c)) {
-			// TODO: Call failure handle
-			// fprintf(stderr, "Failed to create service browser: %s\n", avahi_strerror(avahi_client_errno(client)));
+			char* error = concat("avahi_service_browser_new() ", avahi_strerror(avahi_client_errno(
+							c->client)));
+			clientFailedCallback(ALLOCATION_FAILURE, error);
+			free(error);
 			quit(c);
 			break;
 		}
