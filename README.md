@@ -1,5 +1,5 @@
 # goshneh
-Golang resource discovery library based on avahi
+Golang service discovery library based on avahi
 
 ## Usage
 
@@ -14,8 +14,8 @@ goshneh.Run()
 ### Register Event Handlers
 
 * `PublishedCallback` will be called when introduced service published successfully.
-* `ResolvedCallback` will be called when a resource in browsing type(s) is found.
-* `RemovedCallback` will be called when a resource in browsing type(s) is removed.
+* `ResolvedCallback` will be called when a service in browsing type(s) is found.
+* `RemovedCallback` will be called when a service in browsing type(s) is removed.
 
 ```
 goshneh.PublishedCallback = func(service goshneh.Service, err error) {
@@ -33,7 +33,7 @@ goshneh.RemovedCallback = func(service goshneh.Service) {
 
 ### Browse for a service type
 
-When any resource with given type is resolved or removed related events will be called.
+When any service with given type is resolved or removed related events will be called.
 
 ```
  goshneh.Browse("_http._tcp")
